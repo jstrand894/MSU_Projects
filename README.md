@@ -1,1 +1,1 @@
-# MUS_Projects
+# MSU_Projects
