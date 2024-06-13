@@ -3,24 +3,106 @@ project:
   output-dir: docs
   
 website:
-  title: "MY WEB SITE"
+  title: "Jackson Strand"
+  site-url: https://msu-git.jacksonstrand.com
+  search:
+    location: sidebar
+    type: textbox
+  bread-crumbs: true
+  favicon: img/aboutme/logo.png
   navbar:
+    background: light
+    search: true
+    logo: img/logo.png
+    title: "Jackson Strand"
     left:
+      - text: "Projects"
+        file: qmd/projects.qmd
+      - text: "Pictures"
+        menu: 
+          - qmd/pics/running.qmd
+          - qmd/pics/bugs.qmd
+      - text: "CV"
+        file: qmd/cv.qmd
+      - text: "Helpful Resources"
+        file: qmd/helpful.qmd
+    right: 
       - href: index.qmd
-        text: Home
-      - projects.qmd
+        text: About Me
     tools:
-      - icon: twitter
-        href: https://twitter.com/
+      - icon: linkedin
+        href: https://linkedin.com/in/jacksonstrand
+      - icon: instagram
+        href: https://www.instagram.com/jstrand894/
       - icon: github
-        href: https://github.com/YOURUSERNAME/YOURREPO
+        href: https://github.com/jstrand894/quarto_website
+      - icon: envelope
+        href: "mailto:jstrand894@gmail.com"
+  sidebar:
+    - title: "Work"
+      collapse-level: 3
+      border: true
+      style: "docked"
+      search: true
+      contents:
+        - text: "Projects"
+          file: qmd/projects.qmd
+          contents:
+            - text: "Montana State University"
+              href: qmd/projects/msu.qmd
+              contents:
+                - text: "Wheat Stem Sawfly"
+                  href: qmd/projects/msu/wss.qmd
+                  contents:
+                  - text: "Thesis Proposal"
+                    href: qmd/litreview.qmd
+                  - text: "Paper 1"
+                    href: qmd/projects/msu/wss/paper_1.qmd
+                  - text: "Controlled WSS Infestation"
+                    href: qmd/projects/msu/wss/pfreport.qmd
+                  - text: "Montana Field Sites"
+                    href: qmd/projects/msu/wss/field_report.qmd
+                  - text: "Organic Volatile Collection"
+                    href: qmd/projects/msu/wss/eag.qmd
+                  - text: "Weather Data"
+                    href: qmd/projects/msu/wss/weatherdata.qmd
+                - text: "Locoweed Volatiles"
+                  href: qmd/projects/msu/locoweed.qmd
+                  contents:
+                  - text: "Field VOCs"
+                    href: qmd/projects/msu/locoweed/field-locoweed-report.qmd
+                  - text: "Greenhouse VOCs"
+                    href: qmd/projects/msu/locoweed/gh-locoweed-report.qmd
+                - text: "Toadflax"
+                  href: qmd/projects/msu/toadflax/toadflax_report.qmd
+            - text: "Other"
+              contents:
+                - text: "Basketball Analysis Tool"
+                  file: qmd/projects/bballtool.qmd
+                - text: "Graduate Student Organization"
+                  file: qmd/projects/gso.qmd
   page-footer:
     right: "Built with [Quarto](https://quarto.org/)"
-    left: "&copy; Copyright 2023, YOUR NAME"
+    left: "&copy; Copyright 2024, Jackson Strand"
 
 format:
   html:
-    theme: cerulean
     toc: true
+    theme: 
+      light: [cosmo, _box.scss]
+    # title-block-banner: "#9e74f1"
+    code-block-bg: true
+    code-block-border-left: "#1abcd9"
+    code-copy: true
+    code-overflow: wrap
+    css: [styles.css, _box.scss]
+    grid:
+      sidebar-width: 300px
+      body-width: 1000px
+      margin-width: 200px
+
+freeze: true
 
 editor: source
+
+
