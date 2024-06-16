@@ -1,0 +1,47 @@
+---
+title: "Title Page"
+date: "June 15, 2024"
+editor_options: 
+  chunk_output_type: console
+bibliography: paper1.bib
+link-citations: true
+csl: entomological-society-of-america-2.csl
+---
+
+**Author:**  
+Jackson Strand  
+425 Meriwether Ave, Bozeman, MT 59718  
+jackson.strand\@student.montana.edu  
+612-354-9303
+
+**Title:**  
+Agroecological Importance of Smooth Brome in Managing Wheat Stem Sawfly (Hymenoptera: *Cephidae*) via Its Associated Braconid Parasitoids
+
+**Author List and Affilitions:**  
+Jackson R. Strand  
+Department of Land Resources and Environmental Sciences, Montana State University  
+
+David K. Weaver  
+Department of Land Resources and Environmental Sciences, Montana State University  
+
+Robert K. D. Peterson  
+Department of Land Resources and Environmental Sciences, Montana State University  
+
+Tracy Sterling  
+Department of Land Resources and Environmental Sciences, Montana State University 
+
+**Abstract**  
+Wheat stem sawfly, *Cephus cinctus* Norton (WSS), causes significant damage in cereal crops throughout the Northern Great Plains of North America. *Bracon cephi* and *B. lissogaster* are native WSS parasitoids important in managing WSS outbreaks and damage. Smooth Bromegrass (*Bromus inermis*) grass has been found to be an effective parasitoid sink, and potential trap crop, when grown in areas surrounding wheat fields in Montana. As climate changes continue to alter central and northern Montana, WSS will continue to cause immense damage to dry-land cereal crop yields. We analyzed both local temperature and precipitation trends at our sample sites, and found statistically significant increases in temperature and decreases in precipitation over the past fifty years. Our study observes the utilization of smooth brome in providing year-over-year host refuge for Bracon spp parasitoids. We measured the WSS larval infestation and survival rate within controlled smooth brome plots, observing a maximum infestation of 66.5% and a maximum end-of-year survival of 5.7%. We also collected stems from sites in central and northern Montana where we measured the WSS infestation and parasitoid prevalence within cultivated wheat and adjacent smooth brome. Montana fields sites showed high levels of *C. cinctus* infestation within both *B. inermis* and adjacent wheat crop in Big Sandy (64.5% *B. inermis*, 65.7% adjacent wheat) and Moccasin (50.6%, 38.6%). We observed high year-end WSS larval mortality measured as stem cutting of infested stems with *B. inermis* when compared to adjacent wheat in Big Sandy (2.9% *B. inermis*, 46.5% adjacent wheat) and Moccasin (6.4%, 49.4%). Infested stems exhibited parasitism in both Big Sandy (7.11% *B. inermis*, 8.6% adjacent wheat) and Moccasin (6.11%, 2.09%). This research underlines the importance of providing a sustainable ecological buffer for WSS parasitoids as climate conditions continue to change.
+
+**Keywords**  
+Parasitoids, integrated pest management, biocontrol, habitat, conservation
+
+
+
+
+
+
+
+
+
+

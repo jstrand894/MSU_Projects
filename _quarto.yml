@@ -1,0 +1,47 @@
+project:
+  type: book
+
+book:
+  title: "Ecology of Brome and Parasitoids"
+  author: "Jackson Strand"
+  date: today
+  chapters:
+    - index.qmd
+    - 1b_introduction.qmd
+    - 1c_methods.qmd
+    - 1d_results.qmd
+    - 1e_discussion.qmd
+    - part: "Figures"
+      # chapters: 
+        # - resources.qmd
+        # - Endearment.qmd
+    # - references.qmd
+  search: true
+  favicon: img/logo.png
+  repo-url: https://github.com/jstrand894/MSU_paper1
+  downloads: [docx, pdf]
+
+# bibliography: references.bib
+
+format:
+  html:
+    title-block-banner: "#0e1d4e"
+    title-block-text-color: "#e69b19"
+    title-block-text-size: 5px
+    toc: true
+    code-block-bg: true
+    code-block-border-left: "#1abcd9"
+    # highlight-style: atom-one
+    code-copy: true
+    code-fold: false
+    code-overflow: wrap
+    # code-tools: true
+    code-link: true
+    css: [styles.css, _box.scss]
+  pdf:
+    pdf-engine: xelatex
+    documentclass: scrreprt
+  docx:
+    reference-doc: custom-reference.docx
+execute: 
+  freeze: auto

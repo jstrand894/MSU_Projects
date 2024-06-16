@@ -1,0 +1,160 @@
+---
+title: "Y Tubes"
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r library}
+library(readxl)
+library(tidyverse)
+library(gridExtra)
+```
+
+```{r}
+ytubes <-
+read_excel("yTubes.xlsx")
+
+ytubes_analysis <-
+  ytubes %>%
+  mutate(trial = paste(plus, minus, sep = "-")) %>%
+  dplyr::select(-c(plus, minus, x_count, date)) %>%
+  group_by(species, trial) %>%
+  reframe(plus_count = sum(plus_count),
+          minus_count = sum(minus_count)) %>%
+  filter(species == "lissogaster",
+         trial == "ww-blank") %>%
+  dplyr::select(-c(species, trial))
+
+ytubes_analysis %>%
+  chisq.test()
+
+ytubes_plot_data <-
+  ytubes %>%
+  mutate(trial = paste(plus, minus, sep = "-")) %>%
+  dplyr::select(-date, -plus, -minus, -x_count) %>%
+  pivot_longer(-c(species, trial),
+               names_to = "variable",
+               values_to = "value") %>%
+  mutate(variable = ifelse(grepl("minus", variable),
+                           str_extract(trial, "(?<=-).*$"),
+                           str_extract(trial, "^[^-]+"))) %>%
+  group_by(species, trial, variable) %>%
+  reframe(value = sum(value))
+
+ytubes_plot_data %>%
+  filter(species == "lissogaster") %>%
+  mutate(variable = factor(variable, 
+                           levels = c("brome", 
+                                      "ww", 
+                                      "blank"))) %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = value, y = trial, fill = variable),
+           position = position_dodge(),
+           color = "black") +
+  # geom_text(aes(x = 15, y = trial, group = variable,
+  #               label = variable),
+  #           position = position_dodge(width = 0.9),
+  #           # vjust = 0.5,
+  #           hjust = 1.5) +
+  facet_wrap(~trial, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_continuous(breaks = round(seq(0, 
+                                        max(ytubes_plot_data$value),
+                                        by = 5), 0)) +
+  labs(x = NULL,
+       fill = NULL,
+       y = "Number of females") +
+  scale_fill_brewer(palette = "Greys") +
+  facet_wrap(~species) 
+  
+
+
+
+
+```
+
+
+ytubes %>%
+  pivot_longer(-c(date, species, plus_count, minus_count, x_count),
+               values_to = "source",
+               names_to = "source2")
+view(ytubes)
+ytubes %>%
+  dplyr::select(-c(date, species, plus_count, minus_count))
+
+
+ytubes %>%
+  mutate(trial = paste(plus, minus, sep = "-")) %>%
+  dplyr::select(-date, -plus, -minus, -x_count) %>%
+  pivot_longer(-c(species, trial),
+               names_to = "variable",
+               values_to = "value") %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = variable, y = value, fill = species),
+           position = position_dodge()) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~trial)
+         
+# standard_error <- 
+  ytubes %>%
+  mutate(trial = paste(plus, minus, sep = "-")) %>%
+  dplyr::select(-date, -plus, -minus, -x_count) %>%
+  pivot_longer(-c(species, trial),
+               names_to = "variable",
+               values_to = "value") %>%
+  group_by(species, trial, variable) %>%
+  summarise(
+    mean = mean(value),
+    sd = sd(value),
+    n = n(),
+    se = sd / sqrt(n)
+  )       
+
+  
+ytube_analysis <-
+  ytubes %>%
+  mutate(trial = paste(plus, minus, sep = "-")) %>%
+  dplyr::select(-date, -plus, -minus, -x_count) %>%
+  pivot_longer(-c(species, trial),
+               names_to = "variable",
+               values_to = "value") 
+
+ytube_analysis %>%
+  lm(value ~ trial + species + variable, data = .) %>%
+  summary()
+
+
+
+
+
+
+  
+      
+```
+
+```{r test}
+# Example data (replace with your actual observed counts)
+observed <- c(40, 60)  # Example: 40 insects chose odor A, 60 chose odor B
+
+# Calculate total number of observations
+total_insects <- sum(observed)
+
+# Calculate expected proportions assuming no preference (0.5 for each)
+expected_proportions <- c(0.5, 0.5)
+
+# Calculate expected counts based on total number of insects
+expected <- expected_proportions * total_insects
+
+# Perform chi-square test
+chi_square_result <- chisq.test(observed, p = expected_proportions)
+
+# Print the result
+print(chi_square_result)
+
+
+```
+

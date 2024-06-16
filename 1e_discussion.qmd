@@ -1,0 +1,48 @@
+---
+title: "Discussion"
+editor_options: 
+  chunk_output_type: console
+bibliography: paper1.bib
+link-citations: true
+csl: entomological-society-of-america-2.csl
+suppress-bibliography: true
+---
+
+## Discussion {.unnumbered}
+<!-- CONTROLLED INFESTATION -->
+Assessment of *C. cicntus* infestation and larval mortality within *B. inermis* from out controlled infestation survey showed high infestation coupled with high larval mortality prior to overwintering diapause. Even in cases of high infestation (70%+), larval survival to cutting topped out around around 15%, pointing towards *B. inermis'* ability to serve as a quality sink for *C. cinctus* larvae. These results confirm the assertions by Criddle (1992) and Seamans (1928) that *B. inermis* can serve as a quality *C. cinctus* trap crop. In addition to high larval mortality, stem dissection exhibited high numbers of stems with over four internodes burrowed through by *C. cinctus* larvae. Larval movement through stems can be quick in the case of susceptible cultivated cereal grains [@Criddle1923]. However, *B. inermis*, given it's presumed antibiosis properties, leads to slower larval development and thus movement through the stem. We found several *B.inermis* stems with living larvae as late as late-September. 
+
+<!-- WEATHER DATA -->
+As the climate of central and northern Montana continues to change, wheat stem sawfly infestation will continue to impact cereal crop yields. Precipitation and temperature data from our sampling sites underscores the importance of continuing to monitor and conserve areas of semi-natural grassland. 50-year trends analyzed in this study show similar results to Pederson et al (2009) in which the dry-land agricultural environments found in central and northern Montana are likely to continue to become hotter and dryer on average. Over the past fifty years, precipitation in Big Sandy has decreased by an average of 0.05 inches per year. Given the trend continues, by 2050 the area could experience an inch less of rain per year.
+
+Both average precipitation and average temperatures vary widely between years as the region goes through many droughts and periods of relative high rainfall [@WeatherUnderground; @Pederson2009]. Shown in our analysis of daily measurements over the past five years, precipitation significantly decreases during the period after wheat harvest, July 15 - September15, a period when second generation *Bracon* adults are searching for *C. cinctus* larval hosts. Mid-season senesence of many *C. cinctus* host plants can then leave *Bracon* parasitoids with little resources for 
+
+Prolonged drought, like seen in 2021 in Big Sandy, MT, can cause a dearth of green host plants in these semi-arid environments that can be problimatic for second generation adult parasitoids. 
+
+Given our analysis of NDVI at our sampling sites, it is clear that *B. inermis* is capable of continued late seasonal greening and may provide important resources for *Bracon* spp parasitoids in years of drought or crop failure. It is these buffer zones where parasitoids may be able to find *C. cinctus* larvae in numbers great enough to prevent the larger population crashes that can lead large localized increases in *C. cinctus* populations and damage [@Holmes1982]. 
+
+Analysis of larval *C. cinctus* infestation of *B. inermis* and adjacent winter wheat reveal similar results to our controlled *B. inermis* infestation in Bozeman. We found *B. inermis* infestation to be similar to that of neighboring wheat fields, making it likely that *C. cinctus* pressures *B. inermis* similarly to cultivated wheat.  
+
+<div class="box">
+Still working on adding some citations and information discussing Rand & Peirce papers and how my findings are similar and different. I collected samples twice throughout the year so got a bigger picture of how parasitism changes for each generation. It is looking like parasitism in the fall collections is much higher in the brome compared to the summer collections. Interesting!
+</div>
+
+### Montana Field Site Survey {.unnumbered}
+
+Analysis of weather trends in Big Sandy and Moccasin, MT confirmed that the  patterns in central and northern Montana are changing towards warmer and drier conditions [@Pederson2009]. We observed an average decrease in 0.058 inches of precipitation per year since 1975, while since 1950, temperatures have experienced an average yearly increase of 0.028°C. These changes in precipitation and temperature can have significant impacts on timing of crop production and harvest timing [@Zhu2021]. Year-over-year populations of the *Bracon* spp parasitoids are particularly sensitive, as their bivoltine nature requires the second yearly generation to find a suitable *C. cinctus* host [@Nelson1953; @Runyon2002]. NDVI analyses exhibited the prolonged senescence period for *B. inermis* when compared to adjacent cultivated wheat. *C. cinctus* larvae are cued via the thinning of the cell membranes [@Villacorta1971] during plant senescence to travel to the base of the stem and prepare for obligatory diapause [@Beres2011]. Because *B. inermis* senescence occurs at slower rates compared to wheat or barley, *C. cinctus* may remain within the stem later in into the summer and fall, providing potential host larvae for second generation *Bracon* parasitoids. 
+
+Previous research has shown *B. inermis* to be a quality host of both *C. cinctus* and *Bracon* spp parasitoids [@Criddle1922; @Peirce2021; @Rand2024], but little data is available on the season fluctuation of *B. inermis* utilization [@Criddle1922; @Peirce2021; @Rand2024]. Because we collected stem samples twice during the growing season, we were able to compare levels of parasitism. We hoped to understand how parasitism rates changed from July (pre-wheat harvest) and September (post-wheat harvest) of each year.
+
+Our results showed that parasitoid presence increase significantly at all sites between pre- and post-harvest collections. Given the collection methods, September collection parasitism was inherently a combination of both pre-harvest and post-harvest activity. While we cannot ascertain *Bracon* preference for host stems, we can assess that the parasitoids utilize infested *B. inermis* stems post-harvest when *C. cinctus* is no longer available within wheat stems. 
+
+Additionally, we observed a high number of stems exhibiting levels of *C. cinctus* damage that point to prolonged larval presence within *B. inermis* stems. In Big Sandy (76.2%) and Moccasin (66.5%), stems that exhibited four or more nodes burrowed suggests that *C. cinctus* larvae remain available within *B. inermis* stems past wheat harvest, when they are more limited in availability. Most importantly, in years of drought or increased temperatures where wheat senescence and harvest may occur earlier in the summer. 
+
+We utilized parasitism to cut stem ratios to understand the relative impact of *B. inermis* host sources on overall field parasitism. Assessing overall numbers of insects can potentially diminish the apparent importance of *B. inermis*, as per square meter stem counts in cultivated wheat are denser than *B. inermis* counts within coulees and along roadsides *B. inermis*. Our findings of significantly greater ratios of parasitized stems to cut stems within *B. inermis* when compared to adjacent when indicates these field-side areas provide greater parasitoid source per square meter when compared to cultivated fields. This emphasizes the significance of accounting for habitat diversity to sustain parasitoid populations over successive years, as well as recognizing the crucial role of edge-row areas in maximizing parasitoid effectiveness in minimizing *C. cinctus* damage.
+
+### Old Discussion Text {.unnumbered}
+*C. cinctus* mortality was found to be high in controlled *B. inermis* infestation trials. Our results build upon other studies where *B. inermis* infestation confirmed previously reported high *C. cinctus* larval mortality prior to overwintering [@Shanower2004; @Mendoza2006; @Buteler2008]. Of those infested stems, a large proportion exhibited larval damage in at least 5 internodes (62.5%). While the timing of stem collection and dissection did not align with precise measurement of living larvae (stems dissected in October), we can assert that stems with at least 4 nodes burrowed through would have a high probability of containing large, live larvae, and thus a viable potential parasitoid host, in late July and August of the same year.  
+
+While total and per node *B inermis* infestation by *C. cinctus* was high, survival to overwintering (cutting) only occurred in 5.7% of *C. cinctus* infested stems. Our results indicate that *B. inermis* serves as a high-quality host for *C. cinctus* larvae during the spring and summer months. However, there was minimal survival of *C. cinctus* larvae beyond August and September, confirming that there will be little adult emergence from *B. inermis* the following season. 
+
+Assessing the comparative abundance of *C. cinctus* and its associated parasitoids within *B. inermis* and adjacent cultivated cereal hosts is an important initial step in evaluating whether semi-natural environments within road-side or coulee areas serve as sink or source origins of the pest and its beneficial natural adversaries infiltrating agricultural crops. 
+
