@@ -18,7 +18,7 @@ book:
     # - references.qmd
   search: true
   favicon: img/logo.png
-  repo-url: https://github.com/jstrand894/MSU_paper1
+  repo-url: https://github.com/jstrand894/Strand_etal_2024_pbfield
   downloads: [docx, pdf]
 
 # bibliography: references.bib
