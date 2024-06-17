@@ -5,7 +5,7 @@ editor_options:
 bibliography: paper1.bib
 link-citations: true
 csl: entomological-society-of-america-2.csl
-suppress-bibliography: true
+# suppress-bibliography: true
 ---
 
 ## Controlled *C. cinctus* infestation of *B. inermis* {.unnumbered}

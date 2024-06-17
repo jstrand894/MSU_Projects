@@ -5,7 +5,6 @@ editor_options:
 bibliography: paper1.bib
 link-citations: true
 csl: entomological-society-of-america-2.csl
-suppress-bibliography: true
 ---
 
 Ecologists and farmers frequently hold divergent views regarding the importance of natural habitats within agricultural landscapes, a distinction often overlooked in ecological and conservation discourse [@Tscharntke2016]. While ecologists recognize the role of natural habitats such as field border vegetation in supporting biodiversity and providing potential ecosystem services like biological pest control, many farmers perceive these semi-arid habitat remnants as occupying valuable cropland or even as sources of pests. As such, documenting how pest and natural enemy populations interact with agricultural landscapes alongside semi-natural habitat buffers on the crop periphery is important in determining the degree of the services or disservices provided. 
