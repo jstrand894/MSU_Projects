@@ -1,0 +1,577 @@
+---
+title: "Historical Weather Analysis & NDVI"
+editor_options: 
+  chunk_output_type: console
+bibliography: paper1.bib
+link-citations: true
+csl: entomological-society-of-america-2.csl
+suppress-bibliography: true
+---
+
+
+```{r setup1, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo = FALSE
+)
+```
+
+```{r libraries}
+library(markdown)
+library(tidyverse)
+library(glue)
+library(lubridate)
+library(ggplot2)
+library(maps)
+library(readxl)
+library(kableExtra)
+library(openxlsx)
+library(lme4)
+library(gridExtra)
+library(png)
+library(cowplot)
+library(grid)
+```
+
+```{r moc_weather}
+
+# moccasin NOAA
+moc_weather_noaa <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Weather\ Data/Weather\ Data/weather/moccasin_weather_noaa.xlsx") %>%
+  filter(station == "USW00024036") %>%
+  dplyr::select(date, variable, value, year) %>%
+  mutate(date = ymd(date))
+
+# moccasin prcp MAES
+moc_prcp_maes <-
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Weather\ Data/Weather\ Data/weather/moc_weather_maes.xlsx",
+             sheet = "prcp") %>%
+    dplyr::select(-1, -Annual, -Seasonal) %>%
+    pivot_longer(-Year,
+                 names_to = "month",
+                 values_to = "prcp") %>%
+    mutate(Year = lubridate::year(as.Date(Year, format = "%Y"))) %>%
+    rename("year" = Year) %>%
+    group_by(year) %>%
+    reframe(prcp = sum(prcp)) 
+  
+# moccasin temp MAES
+moc_temp_maes <-
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Weather\ Data/Weather\ Data/weather/moc_weather_maes.xlsx",
+             sheet = "temp") %>%
+    dplyr::select(-1, -Annual, -Seasonal) %>%
+    pivot_longer(-Year,
+                 names_to = "month",
+                 values_to = "temp") %>%
+    mutate(Year = lubridate::year(as.Date(Year, format = "%Y"))) %>%
+    rename("year" = Year) %>%
+    group_by(year) %>%
+    reframe(temp = mean(temp)) 
+
+# past 50 years prcp data
+moc_prcp_50 <-
+moc_prcp_maes %>%
+  filter(year > 1975)
+
+# past 50 years temp data
+moc_temp_50 <-
+  moc_temp_maes %>%
+  filter(year > 1975)
+```
+
+```{r bs_weather}
+# big sandy
+bs_weather <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Weather\ Data/Weather\ Data/weather/bigsandy_weather_noaa.xlsx") %>%
+  filter(station == "USC00240770") %>%
+  dplyr::select(date, variable, value, year, station) %>%
+  mutate(date = ymd(date))
+
+# past 50 years prcp data
+bs_prcp_50 <-
+bs_weather %>%
+  filter(variable == "PRCP") %>%
+  group_by(year) %>%
+  reframe(prcp = mean(value)) %>%
+  distinct() %>%
+  filter(year > 1975,
+         year < 2024,
+         prcp < 25)
+
+bs_temp_noaa <-
+bs_weather %>%
+  filter(variable %in% c("TMAX", "TMIN"),
+         value < 100,
+         value > -30) %>%
+  pivot_wider(names_from = "variable",
+              values_from = "value") %>%
+  na.omit() %>%
+  group_by(date, station) %>%
+  mutate(daily = (TMAX - TMIN)/2) %>%
+  mutate(month = month(date)) %>%
+  # filter(month > 3,
+  #       month < 9) %>%
+  group_by(year, station) %>%
+  reframe(temp = mean(daily)) 
+
+```
+
+```{r both_prcp}
+both_locations_prcp <-
+bs_prcp_50 %>%
+  mutate(location = "Big Sandy") %>%
+  rbind(moc_prcp_50 %>%
+          mutate(location = "Moccasin"))
+
+both_prcp_lm <-
+both_locations_prcp %>%
+  filter(location == "Big Sandy") %>%
+  lm(prcp ~ year, data = .) %>%
+  summary()
+
+moc_50_lm <-
+  moc_prcp_50 %>%
+  lm(prcp ~ year, data = .) %>%
+  summary()
+
+bs_50_lm <-
+  bs_prcp_50 %>%
+  lm(prcp ~ year, data = .) %>%
+  summary()
+
+calculate_segment <- function(model) {
+  intercept <- model$coefficients[1, 1]
+  slope <- model$coefficients[2, 1]
+  segment_formula <- function(x) intercept + slope * x
+  x_start <- 1975
+  x_end <- 2024
+  y_start <- segment_formula(x_start)
+  y_end <- segment_formula(x_end)
+  segment_data <- data.frame(x_start, y_start, x_end, y_end)
+  return(segment_data)
+}
+
+bs_segment <- calculate_segment(bs_50_lm)
+moc_segment <- calculate_segment(moc_50_lm)
+
+both_prcp_plot <-
+both_locations_prcp %>%
+  ggplot() +
+  theme_bw() +
+  geom_segment(data = bs_segment,
+               aes(x = x_start, 
+                   y = y_start,
+                   xend = x_end, 
+                   yend = y_end),
+               color = "#F8766D",
+               alpha = 0.5) +
+  geom_segment(data = moc_segment,
+               aes(x = x_start, 
+                   y = y_start,
+                   xend = x_end, 
+                   yend = y_end),
+               color = "#00BFC4",
+               alpha = 0.5) +
+  geom_line(aes(x = year, y = prcp, color = location),
+            size = 0.3) +
+  geom_smooth(aes(x = year, y = prcp),
+              method = "lm",
+              se = FALSE,
+              color = "black",
+              size = 0.5,
+              alpha = 0.2) +
+  labs(color = "Location (MT, USA)",
+       x = NULL,
+       y = "Average Yearly Precipitation (in)")
+
+ggsave("plots/both_prcp_plot.png", plot = both_prcp_plot,
+       width = 7, height = 5)
+```
+
+```{r both_temp}
+both_temp <-
+moc_temp_maes %>%
+  mutate(location = "Moccasin") %>%
+  bind_rows(bs_temp_noaa %>%
+              select(-station) %>%
+              mutate(location = "Big Sandy") %>%
+              filter(temp < 50)) %>%
+  filter(!temp < 3) %>%
+  mutate(temp = ifelse(location == "Big Sandy",
+                       (temp - 32) * (5/9) * -1 + 10,
+                       (temp - 32) * (5/9))) %>%
+  filter(year > 1950)
+
+both_temp_plot <-
+both_temp %>%
+  na.omit() %>%
+  filter(year > 1975) %>%
+  ggplot() +
+  geom_line(aes(x = year, y = temp, color = location),
+            alpha = 0.5) +
+  geom_smooth(aes(x = year, y = temp),
+              method = "lm",
+              se = FALSE,
+              color = "black") +
+  geom_smooth(aes(x = year, y = temp, color = location),
+              method = "lm",
+              se = FALSE,
+              size = 0.3) +
+  theme_bw() +
+  labs(color = "Location (MT, USA)",
+       x = NULL,
+       y = "Average Yearly Temperature (°C)")
+
+ggsave("plots/both_temp_plot.png", plot = both_temp_plot,
+       width = 7, height = 5)
+
+# lm both
+both_temp_lm <-
+both_temp %>%
+  lm(temp ~ year + location, data = .) %>%
+  summary()
+
+
+
+```
+
+```{r save temp, echo = F}
+calculate_segment <- function(model) {
+  intercept <- model$coefficients[1, 1]
+  slope <- model$coefficients[2, 1]
+  segment_formula <- function(x) intercept + slope * x
+  x_start <- 1975
+  x_end <- 2024
+  y_start <- segment_formula(x_start)
+  y_end <- segment_formula(x_end)
+  segment_data <- data.frame(x_start, y_start, x_end, y_end)
+  return(segment_data)
+}
+
+# moc_segment <- calculate_segment(moc_lm)
+
+moc_temp_plot <-
+moc_temp_maes %>%
+  ggplot() +
+  theme_bw() +
+  geom_line(aes(x = year, y = ((temp - 32) * (5/9))),
+            size = 0.4) + 
+  geom_smooth(aes(x = year, y = ((temp - 32) * (5/9))),
+              method = "lm",
+              se = FALSE,
+              size = 0.5,
+              alpha = 0.2) +
+  labs(color = "Location (MT, USA)",
+       x = NULL,
+       y = "Average Yearly Temperature (°C)")
+
+```
+
+
+In both Big Sandy and Moccasin, MT, we observed a decrease in average yearly precipitation and increase in average yearly temperature over the 50 years evaluated. We observed a significant linear relationship (*r = `r round(both_prcp_lm$r.squared,3)`, P = `r round(both_prcp_lm$coefficients[2,4],3)`, estimate = `r round(both_prcp_lm$coefficients[2,1],3)`*) between average precipitation and year for both Big Sandy and Moccasin, Montana for the same interval. For each location and one-year increase, we observed a 0.05 inch decrease in precipitation ([Fig. 3](#fig3)). Additionally, we observed a significant positive linear relationship (*r = `r round(both_temp_lm$r.squared,3)`, P \< 0.05, estimate = `r round(both_temp_lm$coefficients[2,1],3)`*) between year and average yearly temperature for Moccasin and Big Sandy, MT. Thus, each year, the average daily temperature has increased by `r round(both_temp_lm$coefficients[2,1],2)`°C. ([Fig. 4](#fig4)). 
+
+
+```{r bs_prcp_WU}
+
+# data pulled from weather underground station KMTBIGSA1
+lochy_precip <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Weather\ Data/Weather\ Data/weather/precip_scrape.xlsx", sheet = "big_sandy") %>%
+  arrange(date)
+
+# boxplot
+bs_precip_boxplot_data <-
+lochy_precip %>%
+  na.omit() %>%
+  dplyr::select(date, prcp) %>%
+  mutate(month = month(date),
+         day = day(date),
+         year = as.factor(year(date))) %>%
+  mutate(new_date = make_date(year = 0,
+                              month = month,
+                              day = day)) %>%
+  mutate(category = case_when(new_date < "0000-07-15" ~ "pre",
+                              new_date > "0000-09-15" ~ "post",
+                              new_date >= "0000-07-15" & 
+                                new_date <= "0000-09-15" ~ "mid")) %>%
+  filter(month > 3 & month < 11) %>%
+  mutate(week = case_when(day <= 7 ~ 1,
+                          (day > 7 & day <= 14) ~ 2,
+                          (day > 14 & day <= 21) ~ 3,
+                          (day > 21) ~ 4)) %>%
+  group_by(month, week) %>%
+  reframe(new_date, category,
+          prcp = mean(prcp)) %>%
+  distinct(prcp, .keep_all = TRUE)
+
+# seasonal graph
+bs_seasonal_data <-
+lochy_seasonal_data <-
+lochy_precip %>%
+  dplyr::select(date, prcp) %>%
+  mutate(month = month(date),
+         day = day(date),
+         year = as.factor(year(date))) %>%
+  mutate(new_date = make_date(year = 0,
+                              month = month,
+                              day = day)) %>%
+   mutate(category = case_when(new_date < "0000-07-15" ~ "pre",
+                              new_date > "0000-09-15" ~ "post",
+                              new_date >= "0000-07-15" & 
+                                new_date <= "0000-09-15" ~ "mid")) %>%
+  mutate(model_category = if_else(category == "mid", 
+                                  "mid", "no")) %>%
+  na.omit() %>%
+  group_by(month) %>%
+  arrange(month) %>%
+  reframe(category, model_category, new_date, day,
+          prcp = mean(prcp)) %>%
+  filter(day == 1) %>%
+  distinct() %>%
+  na.omit() %>%
+  mutate(prcp = ifelse(new_date == "0000-08-01", 0.0121, prcp),
+         prcp = ifelse(new_date == "0000-09-01", 0.0193, prcp)) 
+  
+```
+
+```{r ms_prcp_WU}
+# data pulled from weather underground station KMTHOBSO8
+# https://www.wunderground.com/dashboard/pws/KMTHOBSO8/table/2020-07-31/2020-07-31/monthly
+
+moc_precip <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Weather\ Data/Weather\ Data/weather/precip_scrape.xlsx", sheet = "moccasin")
+
+# boxplot
+moc_precip_boxplot_data <-
+moc_precip %>%
+  na.omit() %>%
+  dplyr::select(date, prcp) %>%
+  mutate(month = month(date),
+         day = day(date),
+         year = as.factor(year(date))) %>%
+  mutate(new_date = make_date(year = 0,
+                              month = month,
+                              day = day)) %>%
+  mutate(category = case_when(new_date < "0000-07-15" ~ "pre",
+                              new_date > "0000-09-15" ~ "post",
+                              new_date >= "0000-07-15" & 
+                                new_date <= "0000-09-15" ~ "mid")) %>%
+  filter(month > 3 & month < 11) %>%
+  mutate(week = case_when(day <= 7 ~ 1,
+                          (day > 7 & day <= 14) ~ 2,
+                          (day > 14 & day <= 21) ~ 3,
+                          (day > 21) ~ 4)) %>%
+  group_by(month, week) %>%
+  reframe(new_date, category,
+          prcp = mean(prcp)) %>%
+  distinct(prcp, .keep_all = TRUE) 
+
+# seasonal graph
+moc_seasonal_data <-
+moc_precip %>%
+  dplyr::select(date, prcp) %>%
+  mutate(month = month(date),
+         day = day(date),
+         year = as.factor(year(date))) %>%
+  mutate(new_date = make_date(year = 0,
+                              month = month,
+                              day = day)) %>%
+   mutate(category = case_when(new_date < "0000-07-15" ~ "pre",
+                              new_date > "0000-09-15" ~ "post",
+                              new_date >= "0000-07-15" & 
+                                new_date <= "0000-09-15" ~ "mid")) %>%
+  mutate(model_category = if_else(category == "mid", 
+                                  "mid", "no")) %>%
+  na.omit() %>%
+  group_by(month) %>%
+  arrange(month) %>%
+  reframe(category, model_category, new_date, day,
+          prcp = mean(prcp)) %>%
+  filter(day == 1) %>%
+  distinct() %>%
+  na.omit()
+```
+
+```{r PLOT_bs_moc_boxplot}
+bs_moc_boxplot <-
+bs_precip_boxplot_data %>%
+  mutate(area = "Big Sandy") %>%
+  rbind(moc_precip_boxplot_data %>%
+          mutate(area = "Moccasin")) %>%
+  ggplot() +
+  geom_boxplot(aes(x = factor(category, 
+                                 levels = c("pre",
+                                            "mid",
+                                            "post")), 
+                                 y = prcp,
+                   fill = category)) +
+  theme_bw() +
+  labs(x = NULL,
+       y = "Average Weekly Precipitation (in)") +
+  scale_x_discrete(labels = c("pre" = "Apr 1 - Jul 15",
+                              "mid" = "Jul 15 - Sep 15",
+                              "post" = "Sep 15 - Oct 31")) +
+  scale_fill_brewer(palette = "Blues") +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 15, hjust = 1)) +
+  facet_wrap(~area)
+
+ggsave("plots/bs_moc_boxplot.png", plot = bs_moc_boxplot,
+       width = 7, height = 5)
+```
+
+```{r PLOT_bs_moc_lineplot}
+bs_moc_seasonal_prcp_plot <-
+lochy_seasonal_data %>%
+  mutate(area = "lochy") %>%
+  rbind(moc_seasonal_data %>%
+          mutate(area = "moc")) %>%
+  ggplot(aes(x = new_date, y = prcp, color = area)) +
+  geom_line() +
+  geom_point() +
+  scale_x_date(
+    date_breaks = "1 month",
+    date_labels = "%B",
+    expand = c(0,0),
+    limits = c(as.Date("0000-03-30", format = "%Y-%m-%d"), 
+               as.Date("0000-11-03", format = "%Y-%m-%d"))) +
+  # scale_y_continuous(expand = c(0,0),
+  #                    limits = c(0,0.06)) +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(),
+        legend.position = c(0.85,0.75),
+        legend.box.background = element_rect(color = "black", size = 0.5)) +
+  labs(x = NULL,
+       y = "Average Monthly Precipitation (in)",
+       color = NULL) +
+  theme(axis.text.x = element_text(angle = 15, hjust = 1),
+        plot.caption = element_text(hjust = 0),
+        plot.margin = margin(t = 20, r = 20, b = 40, l = 40,
+                             unit = "pt")) +
+  scale_color_discrete(labels = c("lochy" = "Big Sandy",
+                                "moc" = "Moccasin")) 
+
+ggsave("plots/bs_moc_seasonal_prcp_plot.png", 
+       plot = bs_moc_seasonal_prcp_plot,
+       width = 7, height = 5)
+```
+
+```{r PLOT_both_seasonal_plots}
+
+both_seasonal_plots <-
+  plot_grid(bs_moc_boxplot, bs_moc_seasonal_prcp_plot,
+            labels = "AUTO",
+            ncol = 1)
+
+ggsave("plots/both_seasonal_plots.png", 
+       plot = both_seasonal_plots,
+       width = 7, height = 5)
+```
+
+```{r seasonal_lm, eval = F}
+
+moc_precip %>%
+  dplyr::select(date, prcp) %>%
+  mutate(month = month(date),
+         day = day(date),
+         year = as.factor(year(date))) %>%
+  mutate(new_date = make_date(year = 0,
+                              month = month,
+                              day = day)) %>%
+   mutate(category = case_when(new_date < "0000-07-15" ~ "pre",
+                              new_date > "0000-09-15" ~ "post",
+                              new_date >= "0000-07-15" & 
+                                new_date <= "0000-09-15" ~ "mid")) %>%
+  mutate(model_category = if_else(category == "mid", 
+                                  "mid", "no")) %>%
+  na.omit() %>%
+  lm(prcp ~ model_category, data = .) %>%
+  summary()
+
+lochy_seasonal_data %>%
+  mutate(area = "lochy") %>%
+  rbind(moc_seasonal_data %>%
+          mutate(area = "moc")) %>%
+  lm(prcp ~ model_category, data = .) %>%
+  summary()
+```
+
+
+Analyzing local, precipitation data over the past five years yielded information on how central and northern Montana experience relative dryness during the late-summer months. In Big Sandy, when controlling for year, we saw strong evidence of a significant difference (*p<0.05, F=2.067*, [Fig. 5](#fig5)) between daily rainfall in months prior July 15 and after September 15 compared to days within the July 15 to September 15 'late-summer' period. Analysis of Moccain precipitation data revealed that there is little evidence (*p=0.08, F=1.535*) to suggest a difference between the two date categories. 
+
+```{r MODEL_ndvi_model}
+lochy <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/ndvi/ndvi_2023.xlsx", sheet = "lochy") %>%
+  filter(use == "yes") %>%
+  mutate(date = ymd(date1)) %>%
+  dplyr::select(date,wheat,brome) %>%
+  pivot_longer(-date,
+               names_to = "plant_type",
+               values_to = "ndvi") 
+ndvi_model <-
+lochy %>%
+  filter(date > "2023-07-15") %>%
+  lm(ndvi ~ plant_type + date, data = .) %>%
+  summary()
+```
+
+```{r PLOT_bs_ndvi_plot}
+label_x <- as.Date("2023-07-15")
+label_y <- 0.75
+line_x <- as.numeric(as.Date("2023-07-15"))
+
+# data
+lochy <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/ndvi/ndvi_2023.xlsx", sheet = "lochy") %>%
+  filter(use == "yes") %>%
+  mutate(date = ymd(date1)) %>%
+  dplyr::select(date,wheat,brome) %>%
+  pivot_longer(-date,
+               names_to = "plant_type",
+               values_to = "ndvi")
+
+# plot
+bs_ndvi_plot <-
+lochy %>%
+  ggplot() +
+  geom_point(aes(x = date, y = ndvi, color = plant_type),
+             alpha = 0.5,
+             pch = 1,
+             size = 0.75) +
+  geom_line(aes(x = date, y = ndvi, 
+                color = plant_type, 
+                linetype = plant_type),
+            alpha = 0.5,
+            size = 0.5) +
+  geom_smooth(aes(x = date, y = ndvi, color = plant_type),
+              se = FALSE) +
+  geom_vline(xintercept = line_x,
+             linetype = "dashed", color = "black") +
+  theme_bw() +
+  theme(legend.position = c(0.8,0.8),
+        # legend.key = element_rect(colour = "black"),
+        legend.background = element_rect(colour = "black")) +
+  guides(linetype = FALSE) +
+  labs(x = NULL,
+       y = "NDVI",
+       linetype = NULL,
+       color = NULL) +
+  scale_color_discrete(labels = c(expression(italic("B. inermis")),"Spring Wheat"))
+
+# combine the plot with the map
+ndvi_map <- ggdraw() + 
+  draw_grob(rectGrob(gp=gpar(fill="white", col=NA)), scale = 1) +
+  draw_image(readPNG("plots/ndvi_map.png"), scale = 0.9) 
+  
+
+ndvi_figure <- plot_grid(ndvi_map, bs_ndvi_plot, 
+                         labels = "AUTO",
+                         ncol = 1)
+
+# save the figure
+ggsave("plots/ndvi_figure.png", 
+       plot = ndvi_figure,
+       width = 7, height = 5)
+```
+
+NDVI trends were observed to be significantly different when comparing adjacent *B. inermis* and spring wheat. We saw a significant difference in the *B. inermis* post-July 15 NDVI (F=30.21, P<0.05*) when compared to the post-July 15 NDVI of the adjacent wheat crop. The *B. inermis* NDVI remained relatively linear in downward slope compared to the wheat field ([Fig. 6](#fig6)).

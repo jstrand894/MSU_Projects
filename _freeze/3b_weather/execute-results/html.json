@@ -1,0 +1,17 @@
+{
+  "hash": "f0c2ee426b9a9d178ec383ee4c828e91",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Historical Weather Analysis & NDVI\"\neditor_options: \n  chunk_output_type: console\nbibliography: paper1.bib\nlink-citations: true\ncsl: entomological-society-of-america-2.csl\nsuppress-bibliography: true\n---\n\n\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n\n\nIn both Big Sandy and Moccasin, MT, we observed a decrease in average yearly precipitation and increase in average yearly temperature over the 50 years evaluated. We observed a significant linear relationship (*r = 0.1, P = 0.033, estimate = -0.058*) between average precipitation and year for both Big Sandy and Moccasin, Montana for the same interval. For each location and one-year increase, we observed a 0.05 inch decrease in precipitation ([Fig. 3](#fig3)). Additionally, we observed a significant positive linear relationship (*r = 0.245, P \\< 0.05, estimate = 0.028*) between year and average yearly temperature for Moccasin and Big Sandy, MT. Thus, each year, the average daily temperature has increased by 0.03°C. ([Fig. 4](#fig4)). \n\n\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n\n\nAnalyzing local, precipitation data over the past five years yielded information on how central and northern Montana experience relative dryness during the late-summer months. In Big Sandy, when controlling for year, we saw strong evidence of a significant difference (*p<0.05, F=2.067*, [Fig. 5](#fig5)) between daily rainfall in months prior July 15 and after September 15 compared to days within the July 15 to September 15 'late-summer' period. Analysis of Moccain precipitation data revealed that there is little evidence (*p=0.08, F=1.535*) to suggest a difference between the two date categories. \n\n\n::: {.cell}\n\n:::\n\n::: {.cell}\n\n:::\n\n\nNDVI trends were observed to be significantly different when comparing adjacent *B. inermis* and spring wheat. We saw a significant difference in the *B. inermis* post-July 15 NDVI (F=30.21, P<0.05*) when compared to the post-July 15 NDVI of the adjacent wheat crop. The *B. inermis* NDVI remained relatively linear in downward slope compared to the wheat field ([Fig. 6](#fig6)).\n",
+    "supporting": [
+      "3b_weather_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

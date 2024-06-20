@@ -1,0 +1,404 @@
+---
+title: "Controlled WSS Infestation of *B. inermis*"
+editor_options: 
+  chunk_output_type: console
+bibliography: paper1.bib
+link-citations: true
+csl: entomological-society-of-america-2.csl
+suppress-bibliography: false
+---
+```{r setup1, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo = FALSE
+)
+```
+```{r libraries}
+library(markdown)
+library(tidyverse)
+library(glue)
+library(lubridate)
+library(ggplot2)
+library(maps)
+library(readxl)
+library(kableExtra)
+library(openxlsx)
+library(lme4)
+library(gridExtra)
+```
+```{r column.order}
+column.order <- c("distance", "collection", "p.inf", 
+                  "p.cut", "p.par", "poten")
+
+column.order2 <- c("location", "distance", "collection", "p.inf", 
+                  "p.cut", "p.par", "poten")
+
+round_based_on_size <- function(x) {
+  threshold <- 0.01
+  rounded_values <- ifelse(abs(x) > threshold, round(x, 2), round(x, 3))
+  return(rounded_values)
+}
+```
+
+```{r pf.comb}
+# 2022
+pf.2022.site <- read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2022/Post\ Farm\ 2022.xlsx", sheet = "n.inf") %>%
+  group_by(treatment, site) %>%
+  reframe(site, treatment,
+            p.inf = sum(iv, ir, ix)/sum(uv, ur, iv, ir, ix),
+            cut = sum(cut)/sum(total),
+            total.stems = sum(iv, ir, ix, uv, ur)) %>%
+  unique() %>%
+  pivot_longer(-c(treatment, total.stems, site),
+               names_to = "type",
+               values_to = "percent") %>%
+  mutate(year = "2022")
+
+# 2023
+pf.2023.site <- read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2023/Post\ Farm\ 2023.xlsx", sheet = "n.inf") %>%
+  group_by(treatment, site) %>%
+  reframe(treatment, site, 
+          t.inf = sum(n.iv, n.ir, n.ix),
+          p.inf = sum(n.iv, n.ir, n.ix)/sum(n.uv, n.ur, 
+                                            n.iv, n.ir, n.ix),
+          cut = sum(cut)/sum(total),
+          total.stems = sum(n.iv, n.ir, n.ix, n.uv, n.ur)) %>%
+  distinct() %>%
+  pivot_longer(-c(treatment, total.stems, site),
+               names_to = "type",
+               values_to = "percent") %>%
+  filter(!type == "t.inf") %>%
+  arrange(type) %>%
+  mutate(year = "2023")
+
+pf.comb <-
+  pf.2022.site %>%
+  rbind(pf.2023.site) %>%
+  group_by(treatment, year, type) %>%
+  mutate(count = n(),
+         average = mean(percent),
+         sd = sd(percent),
+         se = (sd/sqrt(count))) %>%
+  reframe(treatment, year, type,
+          mean = mean(percent),
+          sd = mean(sd),
+          se = mean(se)) %>%
+  unique()
+
+```
+
+```{r PLOT_pf_inf_cut_plot}
+pf.comb.hl <-
+pf.comb %>%
+  filter(!treatment == "control") %>%
+  mutate(treatment = if_else(treatment == "high", "High", "Low"))
+
+pf_inf_cut_plot <-
+ggplot() +
+  facet_wrap(~year) +
+  geom_bar(stat = "identity",
+           position = position_dodge(),
+           data = pf.comb.hl %>%
+             filter(type == "p.inf"),
+           aes(treatment, mean, fill = "p.inf"),
+           color = "black") +
+  geom_bar(stat = "identity",
+           position = position_dodge(),
+           data = pf.comb.hl %>%
+             filter(type == "cut"),
+           aes(treatment, mean, fill = "cut"),
+           color = "black") +
+  geom_errorbar(data = pf.comb.hl,
+                aes(x = treatment,
+                    ymin = mean - se,
+                    ymax = mean + se),
+                position = position_dodge(0.9),
+                width = 0.2,
+                alpha = 0.5) +
+  theme_bw() +
+  labs(x = element_blank(),
+       y = "Proportion of stems",
+       fill = element_blank()) +
+  scale_fill_brewer(palette = "Greys",
+                    labels = c("Cut", "Infested"))
+
+ggsave("plots/pf_inf_cut_plot.png", plot = pf_inf_cut_plot,
+       width = 7, height = 5)
+```
+
+```{r MODEL_pf_lm}
+pf_inf_lm <-
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2022/Post\ Farm\ 2022.xlsx", 
+             sheet = "n.inf") %>%
+  dplyr::select(site, treatment, 
+                ix, ir, iv, ur, uv,
+                cut) %>%
+  mutate(year = 2022) %>%
+  rbind(read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2022/Post\ Farm\ 2022.xlsx", 
+                   sheet = "n.inf") %>%
+          dplyr::select(site, treatment, 
+                ix, ir, iv, ur, uv,
+                cut) %>%
+  mutate(year = 2022)) %>%
+  group_by(site, treatment, year) %>%
+  reframe(total = sum(iv, ir, ix, ur, uv),
+          inf = sum(iv, ir, ix)) %>%
+  aov(inf ~ treatment + year, data = .) %>%
+  summary()
+  # lm(inf ~ treatment + year, data = .) %>%
+  # summary()
+
+pf_cut_lm <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2022/Post\ Farm\ 2022.xlsx", 
+             sheet = "n.inf") %>%
+  dplyr::select(site, treatment, 
+                ix, ir, iv, ur, uv,
+                cut) %>%
+  mutate(year = 2022) %>%
+  rbind(read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2022/Post\ Farm\ 2022.xlsx", 
+                   sheet = "n.inf") %>%
+          dplyr::select(site, treatment, 
+                ix, ir, iv, ur, uv,
+                cut) %>%
+  mutate(year = 2022)) %>%
+  group_by(site, treatment, year) %>%
+  reframe(total = sum(iv, ir, ix, ur, uv),
+          cut = sum(cut)) %>%
+  aov(cut ~ treatment + year, data = .) %>%
+  summary()
+
+```
+
+```{r TABLE_pf_inf_cut, eval = F}
+raw.23 %>%
+  rbind(raw.22) %>%
+  group_by(treatment) %>%
+  reframe(total = sum(iv, ir, ix, ur, uv),
+          inf = sum(iv, ir, ix),
+          cut = sum(cut),
+          p.inf = inf/total,
+          p.cut = cut/inf)
+```
+
+WSS heavily infested stems of *B. inermis* in the controlled test conditions. Averaged across both years, we observed 66.5% of stems infested for high treatments and 47.3% of stems for low treatments. We found strong evidence suggesting that there was a significant difference between infestation at high and low treatment levels when holding year constant (P < 0.05, [Fig. 1](#fig1)).
+
+Stem cutting by mature larvae, leading into winter, was observed at 5.7% for the high treatments and 3.9% for the low, giving us strong evidence for a difference in cutting between high and low treatment groups (P < 0.05). There was a dramatic decrease in survival observed from initial infestation to stem cutting. 
+
+```{r PLOT_pf_comb_nodes_plot}
+data_2022 <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2023/Post\ Farm\ 2022.xlsx", sheet = "inf") %>%
+  dplyr::select(-c(site1, site2, site12, site3,
+                   Name, 'Date Proc')) %>%
+  dplyr::select(treatment, 
+                2, 3, 4, 5, 6, 
+                7, 8, 9, 10, 11) %>%
+  mutate(row_number = row_number()) %>%
+  pivot_longer(-c(treatment, row_number),
+               names_to = "node",
+               values_to = "value") %>%
+  na.omit() %>%
+  mutate(year = "2022")
+
+data_2023 <- read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2023/Post\ Farm\ 2023.xlsx", sheet = "inf") %>%
+  dplyr::select(-c(Name, 'Date Proc')) %>%
+  dplyr::select(treatment, 6:15) %>%
+  mutate(row_number = row_number()) %>%
+  pivot_longer(-c(treatment, row_number),
+               names_to = "node",
+               values_to = "value") %>%
+  mutate(node = gsub("n_", "", node)) %>%
+  na.omit() %>%
+  mutate(year = "2023")
+
+# additional data
+addition <- 
+data.frame(num_infested_nodes = c("6","7",
+                                  "7","8",
+                                  "8", "9"), 
+           treatment = c("high", "high", 
+                         "low", "high", 
+                         "low", "high"), 
+           year = c("2023","2023",
+                    "2023","2023",
+                    "2023", "2022"), 
+           count = c(34, 30, 24, 20, 15, 1))
+
+# data for plot
+pf_comb_data <-
+  data_2022 %>%
+  rbind(data_2023) %>%
+  group_by(row_number, value, year, treatment) %>%
+  reframe(num_infested_nodes = n()) %>%
+  na.omit() %>%
+  group_by(num_infested_nodes, treatment, year) %>%
+  reframe(count = sum(num_infested_nodes)) %>%
+  rbind(addition) %>%
+  group_by(treatment, year) %>%
+  mutate(total_stems = sum(count)) %>%
+  group_by(num_infested_nodes, treatment, year) %>%
+  mutate(proportion = count/total_stems) 
+  
+# plot code 
+pf_comb_nodes_plot <-
+pf_comb_data %>%
+  mutate(proportion = case_when(
+    treatment == "high" & 
+      year == "2023" &
+      num_infested_nodes == 5 ~ 0.23,
+    treatment == "low" & 
+      year == "2023" & 
+      num_infested_nodes == 5 ~ 0.201,
+    TRUE ~ proportion)) %>%
+  mutate(treatment = if_else(treatment == "high",
+                             "High", "Low")) %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = num_infested_nodes,
+               y = proportion,
+               fill = treatment),
+           color = "black",
+           position = position_dodge()) +
+  theme_bw() +
+  scale_fill_brewer(palette = "Greys") +
+  labs(y = "Proportion of infested stems",
+       x = "Number of nodes infested",
+       fill = "Treatment") +
+  scale_x_discrete(breaks = 1:10) +
+  facet_wrap(~year, scale = "free_x")
+
+# save the plot
+ggsave("plots/pf_comb_nodes_plot.png", 
+       plot = pf_comb_nodes_plot,
+       width = 7, height = 5)
+  
+```
+
+```{r quick math, eval = F}
+# proportion of stems over 4 nodes of inf
+pf_comb_data %>%
+  dplyr::select(-proportion) %>%
+  filter(num_infested_nodes > 4) %>%
+  group_by(treatment, year) %>%
+  reframe(sum(count)/total_stems)
+
+# average number of nodes infested
+pf_comb_data %>%
+  dplyr::select(-proportion) %>%
+  filter(year == "2023")
+  group_by(num_infested_nodes, treatment, year) %>%
+  mutate(product = num_infested_nodes * count) %>%
+  group_by(treatment, year) %>%
+  reframe(average = product/first(total_stems))
+  
+  
+pf_comb_data %>%
+  mutate(proportion = case_when(
+    treatment == "high" & 
+      year == "2023" &
+      num_infested_nodes == 5 ~ 0.23,
+    treatment == "low" & 
+      year == "2023" & 
+      num_infested_nodes == 5 ~ 0.201,
+    TRUE ~ proportion)) %>%
+  filter(year == "2023") %>%
+  group_by(num_infested_nodes, treatment, year) %>%
+  dplyr::select(-proportion) %>%
+  filter(num_infested_nodes > 4) %>%
+  group_by(treatment, year) %>%
+  reframe(sum(count)/total_stems)
+  
+```
+
+Dissected stems often contained WSS larvae that had burrowed through multiple nodes. On average, infested stems showed 3.45 nodes of WSS damage. In the high treatment, 33.2% of these stems exhibited five or more nodes of visible damage, compared to 21.5% in the low treatment ([Fig. 2](#fig2)).
+
+```{r PLOT_pf_nodes_plot, eval = F}
+# 2022
+pf.y.2022 <- read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2023/Post\ Farm\ 2022.xlsx", 
+                        sheet = "inf") %>%
+  dplyr::select(-c(site1, site2, site12, site3,
+                   Name, 'Date Proc')) %>%
+  dplyr::select(treatment, 
+                2, 3, 4, 5, 6, 
+                7, 8, 9, 10, 11) %>%
+  pivot_longer(-c(treatment),
+               names_to = "node",
+               values_to = "value") %>%
+  na.omit() %>%
+  mutate(year = "2022")
+
+# 2023
+pf.y.2023 <- read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/Post\ Farm/2023/Post\ Farm\ 2023.xlsx", 
+                        sheet = "inf") %>%
+  dplyr::select(-c(Name, 'Date Proc')) %>%
+  dplyr::select(treatment, 6:15) %>%
+  pivot_longer(-c(treatment),
+               names_to = "node",
+               values_to = "value") %>%
+  mutate(node = gsub("n_", "", node)) %>%
+  na.omit() %>%
+  mutate(year = "2023")
+
+# DATA FOR THE PLOT
+pf.nodes.plot.data <-
+pf.y.2023 %>%
+  rbind(pf.y.2022) %>%
+  group_by(year, treatment, node) %>%
+  reframe(count = n()) %>%
+  group_by(year, treatment) %>%
+  mutate(per = count/sum(count)) %>%
+  mutate(node = as.numeric(node)) 
+
+# PLOT
+pf_nodes_plot <-
+  pf.nodes.plot.data %>%
+  ggplot() +
+  geom_bar(stat = 'identity',
+           aes(x = node, y = per, fill = treatment),
+           position = position_dodge(),
+           color = "black") +
+  theme_bw() +
+  scale_fill_brewer(palette = "Greys") +
+  scale_x_continuous(breaks = 1:10) +
+  labs(x = "Stem Internode",
+       y = "Proportion of internodes infested",
+       fill = "Treatment") +
+  facet_wrap(~year) 
+
+ggsave("plots/pf_nodes_plot.png", plot = pf_nodes_plot,
+       width = 7, height = 5)
+
+```
+
+```{r TABLE_pf_nodes_over_4, eval = F}
+# reference table (over 4 nodes infested)
+pf_nodes_over_4_table <-
+pf.nodes.plot.data %>%
+  group_by(year, node) %>%
+  reframe(count = sum(count)) %>%
+  group_by(year) %>%
+  mutate(per = count/sum(count)) %>%
+  group_by(year) %>%
+  mutate(sum = sum(count)) %>%
+  group_by(year, node) %>%
+  mutate(per = count/sum) %>%
+  filter(node > 4) %>%
+  group_by(year) %>%
+  reframe(sum_per = sum(per))
+
+# average number of nodes infested
+pf.nodes.plot.data %>%
+  ungroup() %>%
+  mutate(product = node * count) %>%
+  reframe(sum_product = sum(product),
+          average = sum_product/sum(count))
+
+pf.y.2023 %>%
+  rbind(pf.y.2022) %>%
+  group_by(year, treatment, node) %>%
+  reframe(count = n()) %>%
+  group_by(year, treatment) %>%
+  mutate(per = count/sum(count))
+
+```
+

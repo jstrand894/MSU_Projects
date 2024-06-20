@@ -1,0 +1,10 @@
+---
+title: "Citations"
+editor_options: 
+  chunk_output_type: console
+bibliography: paper1.bib
+link-citations: true
+csl: entomological-society-of-america-2.csl
+---
+
+## Citations {.unnumbered}

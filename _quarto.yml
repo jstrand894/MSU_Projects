@@ -3,20 +3,22 @@ project:
   output-dir: docs
 
 book:
-  title: "Ecology of Brome and Parasitoids"
+  title: "Strand et al 2024"
   author: "Jackson Strand"
   date: today
   chapters:
     - index.qmd
-    - 1b_introduction.qmd
-    - 1c_methods.qmd
-    - 1d_results.qmd
-    - 1e_discussion.qmd
-    - part: "Figures"
-      # chapters: 
-        # - resources.qmd
-        # - Endearment.qmd
-    # - references.qmd
+    - 1_introduction.qmd
+    - 2_methods.qmd
+    - part: "Results"
+      chapters: 
+        - 3a_controlled.qmd
+        - 3b_weather.qmd
+        - 3c_field.qmd
+    - 4_discussion.qmd
+    - 5_figures.qmd
+    - 6_citations.qmd
+
   search: true
   favicon: img/logo.png
   repo-url: https://github.com/jstrand894/Strand_etal_2024_pbfield
@@ -44,5 +46,6 @@ format:
     documentclass: scrreprt
   docx:
     reference-doc: custom-reference.docx
+    toc: false
 execute: 
   freeze: auto

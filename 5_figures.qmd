@@ -1,0 +1,53 @@
+---
+title: "Figures"
+editor_options: 
+  chunk_output_type: console
+---
+
+# Figures  {.unnumbered}
+
+## Controlled Experiment 
+
+### Figure 1 {#fig1 .unnumbered} 
+![Figure 1: Comparison of year and treatment group for controlled infestation of B. inermis. Three treatment groups - high, low, and control (0, not shown) - were used. The controlled groups showed no visible sign of WSS stem damage. We observed a significant difference in both infestation (r=0.83, P<0.05) and cutting (r=0.592, P<0.05) between high and low treatment groups.](plots/pf_inf_cut_plot.png)
+
+### Figure 2 {#fig2 .unnumbered}
+![Figure 2: Proportion of infested *B. inermis* internodes exhibiting visible WSS burrowing damage within controlled infestation plots in Bozeman, MT. We found that 57.1%% of stems in 2022 and 62.3% in 2023 exhibited more than four nodes of WSS damage.](plots/pf_comb_nodes_plot.png)
+
+## Weather and NDVI 
+
+### Figure 3 {#fig3 .unnumbered}
+![Figure 3: Fifty year trend of early Precipitation for Big Sandy and Moccasin, MT. We observed a significant average decrease of 0.05 inches of rainfall per year (r = 0.1, P = 0.033) when both data sets were combined.](plots/both_prcp_plot.png)
+
+### Figure 4 {#fig4 .unnumbered}
+![Figure 4: Fifty year trend of yearly mean temperature for Big Sandy and Moccasin, MT. We observed a significant average increase of 0.03 °C per year (r = 0.245, P < 0.05) when both data sets were combined.](plots/both_temp_plot.png)
+
+### Figure 5 {#fig5 .unnumbered} 
+![Figure 5: Five year seasonal change in precipitation for Big Sandy and Moccasin, Montana, USA. Averaged from data between 2018 and 2023 from Weather Underground. Noticable change in average precipitation after mid July with little precipitation after July 15. We found evidence of a significant difference in rainfall between pre-July 15 and post-July 15 averages (P<0.05). A) Boxplot showing average weekly rainfall during each time period. B) Lineplot showing seasonal trend of average rainfall.](plots/both_seasonal_plots.png)
+
+### Figure 6 {#fig6 .unnumbered} 
+![Figure 6: Normalized difference vegetation index (NDVI) of B. inermis and adjacent spring wheat field from April 2023 in Big Sandy, MT. Post harvest linear modeling indicates a significant difference (F = 30.21, P<0.05)](plots/ndvi_figure.png)
+
+## Field Sites 
+
+### Figure 7 {#fig7 .unnumbered}
+![Figure 7: Proportion of infested *B. inermis* internodes exhibiting visible WSS burrowing damage within controlled infestation plots in Big Sandy and Moccasin, MT. We found that 19.5% of stems in Big Sandy and 27.1% of stems in Moccasin four or more nodes exhibiting WSS damage.](plots/brome_inf_nodes_plot.png)
+
+## Figure 8 {#fig8 .unnumbered} 
+![Figure 6: Ratio of stems found to be parasitized by Bracon spp. to stems cut by WSS. Stems collected from field sites in Moccasin and Big Sandy, MT. Dotted horizontal line represents ratio of 1 where parasitized stems are equal to cut stems. All ratios are greater than one for *B. inermis* while all ratios are less than one for adjacent wheat fields.](plots/ratio_plot.png)
+
+
+
+
+
+# Supplemental Figures
+
+## Supplemental Figure 1 {#supp1 .unnumbered}
+![Figure 1: Location of Montana, USA field sites. Controlled *B. inermis* infestation site was in Bozeman, while field sites were located in centrally-located Moccasin and in more northern Big Sandy.](montana_site_map.png)
+
+## Supplemental Figure 2 {#supp2 .unnumbered} 
+![Figure 2: Barplot comparisons showing proportion of parasitism within infested field-collected *B. inermis* stems. Fall samplings consistently revealed higher rates of parasitism when compared to summer collections from the same location (P<0.05).](plots/brome_par_plot.png)
+
+## Supplemental Figure 3 {#supp3 .unnumbered}
+![](plots/brome_images.jpg)
+

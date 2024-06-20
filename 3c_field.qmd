@@ -1,0 +1,875 @@
+---
+title: "Field Sites"
+editor_options: 
+  chunk_output_type: console
+bibliography: paper1.bib
+link-citations: true
+csl: entomological-society-of-america-2.csl
+suppress-bibliography: true
+---
+```{r setup1, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo = FALSE
+)
+```
+```{r libraries}
+library(markdown)
+library(tidyverse)
+library(glue)
+library(lubridate)
+library(ggplot2)
+library(maps)
+library(readxl)
+library(kableExtra)
+library(openxlsx)
+library(lme4)
+library(gridExtra)
+```
+
+```{r stubble data}
+# stubble 2023
+stubble_2023 <-
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2023/2023\ Field Site\ Data.xlsx", 
+           sheet = "stubble") %>%
+  dplyr::select(-c(name,date.proc,"%inf", "%cut")) %>%
+  na.omit() %>%
+  mutate(year = "2023") 
+
+# stubble 2022
+stubble_2022 <-
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2022/2022 FS Stem Data (2).xlsx", 
+             sheet = "stubble") %>%
+  mutate(year = "2022") %>%
+  dplyr::select(-c(name, date.proc, "%inf", "%cut"))
+
+comb_stubble <-
+stubble_2023 %>%
+  rbind(stubble_2022) %>%
+  rename("c" = cocoon,
+         "e" = eh,
+         "total.stems" = total) %>%
+  group_by(site, year, collection) %>%
+  mutate(inf = sum(cut, inf.nc,c,e)) %>%
+  dplyr::select(-c(inf.nc, larvae)) 
+```
+```{r comb_brome}
+# brome 2022
+raw_2022 <- 
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2022/2022 FS Stem Data (2).xlsx", sheet = "n.infested") %>%
+  mutate(year = "2022") %>%
+  dplyr::select(-c(other, date.proc, name, 
+                   par.rate, cut.rate, inf)) %>%
+  rename("site" = site.cap)
+
+# brome 2023
+raw_2023 <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2023/2023\ Field Site\ Data.xlsx", sheet = "n.infested") %>%
+  mutate(year = "2023") %>%
+  dplyr::select(-c(loc.stub, date.proc, uv, ur, iv, ir, ix, 
+                   total.stems, add, inf, a)) %>%
+    rename(uv = n.uv,
+           ur = n.ur,
+           iv = n.iv,
+           ir = n.ir,
+           ix = n.ix,
+           total.stems = n.total)
+# combine brome years
+comb_brome <- 
+raw_2023 %>%
+  rbind(raw_2022) %>%
+  group_by(site, year, collection) %>%
+  mutate(inf = sum(iv, ir, ix),
+         uninf = sum(uv, ur),
+         cut = sum(cut)) %>%
+  dplyr::select(-c(iv, ir, ix, uv, ur)) %>%
+  mutate(distance = "brome") %>%
+  mutate(sample_site = case_when(
+    location %in% c("nn", "ss", "ns", "n") ~ "North Road",
+    location %in% c("kw", "ke", "k") ~ "Kolin Road",
+    location %in% c("sun", "har") ~ "Sunset & Harvest",
+    location == "g" ~ "Gardiner Road",
+    TRUE ~ NA_character_)) %>%
+  mutate(region = case_when(
+    location %in% c("nn", "ss", "ns", "n") ~ "Big Sandy",
+    location == "g" ~ "Big Sandy",
+    location %in% c("kw", "ke", "k") ~ "Moccasin",
+    location %in% c("sun", "har") ~ "Moccasin",
+    TRUE ~ NA_character_))
+```
+```{r brome_inf_20}
+brome_inf_2023 <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2023/2023\ Field Site\ Data.xlsx", sheet = "y.infested") %>%
+  dplyr::select(-c("date.proc")) %>%
+  mutate(year = "2023")
+
+brome_inf_2022 <-
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2022/2022 FS Stem Data (2).xlsx", sheet = "y.infested") %>%
+  dplyr::select(-c("old name", "name", "date.proc", "cut")) %>%
+  mutate(year = "2022")
+```
+
+```{r brome infestation percentages, eval = F}
+comb_brome %>% 
+  ungroup() %>%
+  na.omit() %>%
+  dplyr::select(sample_site, year, collection, 
+                region, total.stems, inf) %>%
+  group_by(year, region, collection) %>%
+  reframe(inf_per = sum(inf)/sum(total.stems)) %>%
+  arrange(collection, region) %>%
+  filter(collection == "fall")
+```
+
+```{r brome infestation compared to wheat, eval = F}
+comb_brome %>% 
+  na.omit() %>%
+  dplyr::select(sample_site, year, collection, 
+                region, total.stems, inf) %>%
+  ungroup() %>%
+  reframe(inf_per = sum(inf)/sum(total.stems)) 
+
+comb_stubble %>%
+  na.omit() %>%
+  ungroup() %>%
+  reframe(inf_per = sum(inf)/sum(total.stems))
+```
+
+```{r ungrouped cutting comparison brome wheat, eval = F}
+comb_brome %>%
+  na.omit() %>%
+  ungroup() %>%
+  # group_by(region, collection) %>%
+  reframe(inf = sum(inf),
+          cut = sum(cut),
+          cut.per = cut/inf)
+
+comb_stubble %>%
+  na.omit() %>%
+  ungroup() %>%
+  reframe(inf = sum(inf),
+          cut = sum(cut),
+          cut.per = cut/inf)
+```
+
+```{r brome and wheat cutting parsaitism table, eval = F}
+comb_brome %>%
+  na.omit() %>%
+  group_by(region, year) %>%
+  filter(collection == "fall") %>%
+  reframe(inf_per = sum(inf)/sum(total.stems),
+          cut_per = sum(cut)/sum(inf))
+
+
+  
+```
+
+```{r total stems and number of sample sites, eval = F}
+comb_stubble %>%
+  ungroup() %>%
+  na.omit() %>%
+  dplyr::select(total.stems) %>%
+  rbind(comb_brome %>%
+          ungroup() %>%
+          na.omit() %>%
+          dplyr::select(total.stems)) %>%
+  reframe(sum(total.stems))
+
+comb_brome %>% 
+  ungroup() %>%
+  na.omit() %>%
+  dplyr::select(sample_site) %>%
+  distinct()
+  
+```
+
+
+We quantified WSS and *Bracon* spp. parasitoid presence in 5,971 wheat and grass stems across four research sites in 2022 and 2023. Initial infestation of *B. inermis* by WSS varied between collection sites, with the greatest infestation taking place within our three Big Sandy, MT sampling sites (2022: 86.3%, 2023: 67.7%), while in Moccasin we observed lower rates (2022: 56.2%, 2023: 51.6%). Across all sites and years in Big Sandy and Moccasin, we observed an average infestation of 57.6% within *B. inermis* and 45.3% within the adjacent wheat. Cutting by WSS was observed at an average rate of 3.72% in *B. inermis* and 47.1% in the adjacent cultivated wheat.
+
+```{r PLOT_brome_inf_nodes_plot}
+internode_data <-
+  brome_inf_2023 %>%
+  rbind(brome_inf_2022) %>%
+  filter(collection == "fall") %>%
+  mutate(row_num = row_number()) %>%
+  mutate(sample_site = case_when(
+    location %in% c("nn", "ss", "ns", "n") ~ "North Road",
+    location %in% c("kw", "ke", "k") ~ "Kolin Road",
+    location %in% c("sun", "har") ~ "Sunset & Harvest",
+    location == "g" ~ "Gardiner Road",
+    TRUE ~ NA_character_)) %>%
+  mutate(region = case_when(
+    location %in% c("nn", "ss", "ns", "n") ~ "Big Sandy",
+    location == "g" ~ "Big Sandy",
+    location %in% c("kw", "ke", "k") ~ "Moccasin",
+    location %in% c("sun", "har") ~ "Moccasin",
+    TRUE ~ NA_character_)) %>%
+  dplyr::select(-c(collection,location)) %>%
+  pivot_longer(-c(year, site, lar, v.r, 
+                  sample_site, region, row_num),
+               names_to = "node",
+               values_to = "status") %>%
+  dplyr::select(-c(v.r, lar, site)) %>%
+  group_by(row_num, year, status,
+           region) %>%
+  na.omit() %>%
+  reframe(num_inf_nod = n()) %>%
+  group_by(num_inf_nod, year, 
+           region) %>%
+  reframe(count = sum(num_inf_nod)) %>%
+  group_by(year, region) %>%
+  mutate(total_stems = sum(count)) %>%
+  group_by(num_inf_nod, year, 
+           region) %>%
+  mutate(proportion = count/total_stems)
+
+brome_inf_nodes_plot <-
+internode_data %>%
+  mutate(num_inf_nod = as.factor(num_inf_nod)) %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = num_inf_nod,
+               y = proportion, 
+               fill = year),
+           color = "black",
+           width = 0.7,
+           position = position_dodge()) +
+  theme_bw() +
+  # theme(legend.position = "none") +
+  scale_fill_brewer(palette = "Greys") +
+  labs(y = "Proportion of infested stems",
+       x = "Number of nodes infested",
+       fill = NULL) +
+  scale_x_discrete(breaks = 1:10) +
+  facet_grid(~region, scale = "free_x")
+
+ggsave("plots/brome_inf_nodes_plot.png",
+       plot = brome_inf_nodes_plot,
+       width = 7, height = 5)
+
+```
+
+```{r old plot that is no good, eval = F}
+brome_inf_nodes_plot <-
+internode_data  %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = node, y = per, fill = collection),
+           position = position_dodge(),
+           color = "black") +
+  facet_wrap(~region) +
+  scale_x_continuous(breaks = 1:10) +
+  theme_bw() +
+  scale_fill_brewer(palette = "Greys",
+                    labels = c("fall" = "Fall",
+                               "summer" = "Summer")) +
+  labs(x = "Stem Internode",
+       y = "Proportion of nodes infested",
+       fill = NULL)
+```
+
+```{r inf nodes over 4, eval = F}
+internode_data %>%
+  filter(region == "Big Sandy") %>%
+  ungroup() %>%
+  mutate(total_count = sum(count)) %>%
+  filter(num_inf_nod > 3) %>%
+  reframe(sum = sum(count),
+          per = sum/total_count) %>%
+  distinct() %>% pull(per)
+
+internode_data %>%
+  filter(region == "Moccasin") %>%
+  ungroup() %>%
+  mutate(total_count = sum(count)) %>%
+  filter(num_inf_nod > 3) %>%
+  reframe(sum = sum(count),
+          per = sum/total_count) %>%
+  distinct() %>% pull(per)
+```
+
+```{r old bad code for plot, eval = F}
+ggplot() +
+  geom_bar(stat = "identity",
+           data = internode_data %>%
+             filter(region == "Big Sandy"),
+           position = position_dodge(width = 0.9),
+           aes(x = node, y = per, fill = collection),
+           color = "black",
+           width = 0.9) +
+  geom_bar(stat = "identity",
+           data = internode_data %>%
+             filter(region == "Moccasin"),
+           position = position_dodge(width = 0.9),
+           aes(x = node, y = -per, fill = collection),
+           color = "black",
+           width = 0.9) +
+  geom_hline(yintercept = 0,
+             linewidth = 0.5) +
+  coord_flip() +
+  theme_bw() +
+  theme(panel.grid.minor.y = element_blank()) +
+  scale_x_continuous(breaks = 1:10) +
+  scale_y_continuous(labels = function(x) abs(x),
+                     breaks = seq(-0.4, 0.4, by = 0.1)) +
+  scale_fill_brewer(palette = "Greys",
+                    labels = c("fall" = "Fall",
+                               "summer" = "Summer")) +
+  labs(x = "Stem Internode",
+       y = "Proportion of nodes infested",
+       fill = NULL) +
+  geom_label(aes(label = "Moccasin",
+                 x = 10,
+                 y = -0.2),
+             size = 3,
+             label.r = unit(0, "lines")) +
+  geom_label(aes(label = "Big Sandy",
+                 x = 10,
+                 y = 0.2),
+             size = 3,
+             label.r = unit(0, "lines")) 
+```
+
+
+To generate a relative estimate of the number of potentially available WSS host larvae within *B. inermis* late in the growing season, we calculated the number of stems that contained at least four or more nodes with burrowing injury. In Big Sandy, 39.5% of collected stems in the fall exhibited at least 4 nodes of burrowing injury at our second sampling date. In Moccasin, the corresponding figure was 53.1% ([Fig. 7](#fig7)
+
+```{r PLOT_ratios}
+# brome 2022
+raw.2022 <- 
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2022/2022 FS Stem Data (2).xlsx", sheet = "n.infested") %>%
+  mutate(year = "2022") %>%
+  dplyr::select(-c(other, date.proc, name, 
+                   par.rate, cut.rate, inf)) %>%
+  rename("site" = site.cap)
+
+# brome 2023
+raw.2023 <-
+read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2023/2023\ Field Site\ Data.xlsx", sheet = "n.infested") %>%
+  mutate(year = "2023") %>%
+  dplyr::select(-c(loc.stub, date.proc, uv, ur, iv, ir, ix, 
+                   total.stems, add, inf, a)) %>%
+    rename(uv = n.uv,
+           ur = n.ur,
+           iv = n.iv,
+           ir = n.ir,
+           ix = n.ix,
+           total.stems = n.total)
+# combine brome years
+comb.brome <- 
+raw.2023 %>%
+  rbind(raw.2022) %>%
+  group_by(site, year, collection) %>%
+  mutate(inf = sum(iv, ir, ix),
+         uninf = sum(uv, ur)) %>%
+  dplyr::select(-c(iv, ir, ix, uv, ur)) %>%
+  mutate(distance = "brome")
+
+
+# stubble 2023
+stubble.2023 <-
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2023/2023\ Field Site\ Data.xlsx", 
+           sheet = "stubble") %>%
+  dplyr::select(-c(name,date.proc,"%inf", "%cut")) %>%
+  na.omit() %>%
+  mutate(year = "2023")
+
+# stubble 2022
+stubble.2022 <-
+  read_excel("/Users/jacksonstrand/Library/CloudStorage/OneDrive-MontanaStateUniversity/Data/BWW/Field/field Sites/2022/2022 FS Stem Data (2).xlsx", 
+             sheet = "stubble") %>%
+  mutate(year = "2022") %>%
+  dplyr::select(-c(name, date.proc, "%inf", "%cut"))
+
+comb.stubble <-
+stubble.2023 %>%
+  rbind(stubble.2022) %>%
+  rename("c" = cocoon,
+         "e" = eh,
+         "total.stems" = total) %>%
+  mutate(inf = sum(cut, inf.nc,c,e)) %>%
+  dplyr::select(-c(inf.nc, larvae)) 
+
+## combine brome and wheat data 
+
+ratio_plot_data <-
+comb.brome %>%
+  rbind(comb.stubble) %>%
+  na.omit() %>%
+  dplyr::select(year, site, location, collection, distance, everything()) %>%
+  mutate(location = if_else(location %in% c("ke", "kw"), 
+                            "k", location),
+         location = if_else(location %in% c("nn", "ns"), 
+                            "n", location)) %>%
+  mutate(region = if_else(
+    location %in% c("har", "sun", "k", "chs"),
+    "moccasin", "big sandy")) %>%
+  mutate(plant_type = if_else(distance == "brome", "brome", "wheat")) %>%
+  dplyr::select(-distance) %>%
+  group_by(year, site, location, collection) %>%
+  mutate(p = sum(c, e)) %>% dplyr::select(-c(c, e, inf, uninf)) %>%
+  group_by(year, region, collection, plant_type) %>%
+  reframe(year, region, collection, plant_type,
+          total.stems = sum(total.stems),
+          p_mean = mean(p),
+          p_sd = sd(p),
+          p_se = p_sd/sqrt(total.stems),
+          cut_mean = mean(cut),
+          cut_sd = sd(cut),
+          cut_se = cut_sd/sqrt(total.stems)) %>%
+  distinct() %>%
+  group_by(year, region, collection, plant_type) %>%
+  mutate(ratio = p_mean/cut_mean,
+         ratio_se = ratio*sqrt((p_se/p_mean)^2 + (cut_se/cut_mean)^2)) %>%
+  filter(collection == "fall") 
+
+# ratio_plot_data %>%
+#   dplyr::select(year, region, plant_type, ratio)
+
+ratio_plot <-
+  ratio_plot_data %>%
+  mutate(region = case_when(
+    region == "big sandy" ~ "Big Sandy",
+    region == "moccasin" ~ "Moccasin",
+    TRUE ~ region)) %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+             aes(x = plant_type,
+                 y = ratio, 
+                 fill = plant_type),
+             color = "black") +
+  geom_errorbar(aes(x = plant_type,
+                    ymin = ratio - ratio_se,
+                    ymax = ratio + ratio_se),
+                width = 0.15) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = NULL,
+       y = "Ratio of parasitized to cut stems") +
+  scale_fill_brewer(palette = "Greys") +
+  scale_x_discrete(labels = c("brome" = "Smooth brome",
+                               "wheat" = "Adjacent wheat")) +
+  geom_hline(yintercept = 1, 
+             linetype = "dashed",
+             color = "black") +
+  facet_grid(year~region)
+
+ggsave("plots/ratio_plot.png", plot = ratio_plot,
+       width = 7, height = 5)
+```
+
+
+We utilized the ratio of parasitized stems to cut stems to better understand the true impact of our *B. inermis* sink/source ecology for pest and natural enemy systems. The greatest ratio observed was found within *B. inermis* in Big Sandy, MT in the fall of 2022, where we observed a ratio of 16 parasitoids to a single WSS-cut stem. Thus, for every square meter of *B. inermis*, we would observe 16 stems that produced a parasitoid for every 1 stem that was likely to produce an adult WSS. The lowest ratio observed in our study was in adjacent wheat in Moccasin, 2022, where for every parasitoid, over nine WSS adults were found. All sample locations of *B. inermis* displayed positive ratios of parasitoids to cut stems, whereas adjacent wheat samples consistently showed negative ratios of parasitoids. [(Fig. 8)](#fig8).
+
+
+```{r parsitism models, eval = F}
+# mixed effects linear model
+comb_brome %>%
+  na.omit() %>%
+  group_by(sample_site, year, collection) %>%
+  reframe(inf = sum(inf),
+          p = sum(c, e),
+          par_per = p/inf) %>%
+  mutate(par_per_log = log1p(par_per)) %>%
+  lmer(par_per_log ~ collection + 
+         (1 | sample_site) + (1| year),
+       data = .) %>%
+  summary()
+
+# linear model
+comb_brome %>%
+  na.omit() %>%
+  group_by(sample_site, year, collection) %>%
+  reframe(inf = sum(inf),
+          p = sum(c, e),
+          par_per = p/inf) %>%
+  lm(par_per ~ collection + year + sample_site, 
+     data = .) %>%
+  summary()
+
+# anova
+comb_brome %>%
+  na.omit() %>%
+  group_by(sample_site, year, collection) %>%
+  reframe(inf = sum(inf),
+          p = sum(c, e),
+          par_per = p/inf) %>%
+  aov(par_per ~ collection + year + sample_site,
+      data = .) %>%
+  summary()
+```
+
+```{r plot_data}
+
+plot.data <-
+comb_brome %>%
+  rbind(comb_stubble) %>%
+  mutate(plant_type = if_else(distance == "brome", "brome", "wheat")) %>%
+  dplyr::select(year, region, collection, plant_type,
+                total.stems, inf, uninf, cut, c, e) %>%
+  group_by(site, collection, year) %>%
+  mutate(par = sum(c,e)) %>% dplyr::select(-c(c,e)) %>%
+  group_by(year, collection, region, plant_type, site) %>%
+  mutate(count = n()) %>%
+  ungroup() %>%
+  dplyr::select(-c(uninf)) %>%
+  group_by(year, collection, region, 
+           plant_type, site) %>%
+  mutate(total.stems = sum(total.stems),
+         count = sum(count),
+         per.inf = inf/total.stems,
+         per.par = par/inf,
+         per.cut = cut/inf) %>%
+  distinct() %>%
+  pivot_longer(-c(year, collection, region, 
+                  plant_type, count, total.stems, 
+                  site, inf, cut, par),
+               names_to = "variable",
+               values_to = "value") %>%
+  dplyr::select(-site) %>%
+  group_by(year, collection, 
+           region, plant_type) %>%
+  mutate(total.stems = sum(total.stems),
+         count = sum(count),
+         inf = sum(inf),
+         cut = sum(cut),
+         par = sum(par)) %>%
+  group_by(year, collection, region, 
+           plant_type, variable) %>%
+  mutate(sd = sd(value),
+         value = mean(value),
+         se = sd/sqrt(count)) %>%
+  ungroup() %>%
+  dplyr::select(-site) %>%
+  distinct() 
+
+```
+
+```{r PLOT_brome_par_plot}
+brome_par_plot <-
+plot.data %>%
+  filter(plant_type == "brome",
+         variable == "per.par") %>%
+  mutate(collection = factor(collection,
+                             levels = c("summer",
+                                        "fall"))) %>%
+  na.omit() %>%
+  ungroup() %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = region, 
+               y = value, 
+               fill = collection),
+           position = position_dodge(),
+           width = 0.5,
+           color = "black") +
+  geom_errorbar(aes(x = region,
+                    group = collection,
+                    ymin = value - se,
+                    ymax = value + se),
+                position = position_dodge(width = 0.5),
+                width = 0.15) +
+  theme_bw() +
+  labs(x = NULL,
+       fill = NULL,
+       y = "Proportion of stems parasitized") +
+  scale_fill_brewer(palette = "Greys",
+                    labels = c("summer" = "Summer",
+                               "fall" = "Fall")) +
+  facet_grid(~year, scales = c("free"))
+
+ggsave("plots/brome_par_plot.png", plot = brome_par_plot,
+       width = 7, height = 5)
+
+
+```
+
+
+<!-- To understand the seasonal trends of *Bracon* spp use of potential WSS hosts within *B. inermis*, we collected stem samples twice each growing season. We observed a significant difference in parasitism observed between summer and fall collections (*estimate = -0.101, 95% CI: -0.137, -0.065*).  -->
+
+Fall collection parasitism was consistently higher when compared to summer samples from the same sites. We have strong evidence (P < 0.05*) to suggest that parasitism within our fall collections is greater than parasitism rates from our summer collections when considering sample site and year ([Fig. 9](#fig9)). 
+
+```{r larvae_status_stats, eval = F}
+data <-
+brome_inf_2023 %>%
+  rbind(brome_inf_2022) %>%
+  mutate(row_num = row_number()) %>%
+  mutate(sample_site = case_when(
+    location %in% c("nn", "ss", "ns", "n") ~ "North Road",
+    location %in% c("kw", "ke", "k") ~ "Kolin Road",
+    location %in% c("sun", "har") ~ "Sunset & Harvest",
+    location == "g" ~ "Gardiner Road",
+    TRUE ~ NA_character_)) %>%
+  mutate(region = case_when(
+    location %in% c("nn", "ss", "ns", "n") ~ "Big Sandy",
+    location == "g" ~ "Big Sandy",
+    location %in% c("kw", "ke", "k") ~ "Moccasin",
+    location %in% c("sun", "har") ~ "Moccasin",
+    TRUE ~ NA_character_)) %>%
+  dplyr::select(-location) %>%
+  mutate(row_num = row_number()) %>%
+  pivot_longer(-c(year, site, sample_site, region, 
+                  collection, lar, v.r, row_num),
+               names_to = "node",
+               values_to = "status") 
+
+data %>%
+  group_by(year, region, sample_site, collection,
+           node) %>%
+  na.omit() %>%
+  reframe(count = n()) %>%
+  group_by(year, region, sample_site, collection) %>%
+  mutate(per = count/sum(count)) %>%
+  filter(node >= 4) %>%
+  group_by(year, region, sample_site, collection) %>%
+  reframe(per = sum(per)) %>%
+  pivot_wider(names_from = collection,
+              values_from = per) %>%
+  arrange(region, sample_site)
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = year, y = per, fill = collection),
+           position = position_dodge())
+
+  na.omit() %>%
+  mutate(row_num = as.factor(row_num)) %>%
+  group_by(row_num, site, sample_site, 
+           region, collection) %>%
+  reframe(count = n()) %>%
+  rename(nodes.inf = count) %>%
+  group_by(sample_site, region, collection, nodes.inf) %>%
+  reframe(count2 = n()) %>%
+  mutate(nodes.inf = as.factor(nodes.inf)) 
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = collection, y = count2, fill = nodes.inf),
+           position = position_dodge()) +
+  facet_wrap(~sample_site)
+  
+  
+  # how many stems had living larvae in the fall?
+data %>%
+  group_by(year, region, sample_site, collection,
+           node) %>%
+  na.omit() %>%
+  reframe(count = n()) %>%
+  group_by(year, region, sample_site, collection) %>%
+  mutate(per = count/sum(count)) %>%
+  filter(node >= 4) %>%
+  group_by(year, region, sample_site, collection) %>%
+  reframe(per = sum(per)) %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = year, y = per, fill = collection),
+           position = position_dodge())
+
+data %>%
+  dplyr::select(year, sample_site, region, collection, lar) %>%
+  distinct() %>%
+  group_by(year, sample_site, region, collection, lar) %>%
+  reframe(count = n()) %>%
+  filter(collection == "fall",
+         lar == "a")
+  
+  group_by(sample_site, region, collection) %>%
+  reframe(count = n()) 
+  group_by(sample_site, region, collection) %>%
+  mutate(total = sum(count),
+         per = count / total) 
+  filter(lar %in% c("a", "c", "cut", "e")) %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = sample_site, y = per, fill = lar),
+           position = position_dodge()) +
+  facet_wrap(~collection)
+```
+
+
+
+
+```{r brome_par_model}
+brome_par_model_data <-
+comb_brome %>%
+  rbind(comb_stubble) %>%
+  na.omit() %>%
+  filter(!location %in% c("chs", "b")) %>%
+  mutate(plant_type = if_else(distance == "brome", 
+                              "brome", "wheat")) %>%
+  dplyr::select(year, region, sample_site, collection, plant_type,
+                total.stems, inf, uninf, cut, c, e) %>%
+  group_by(site, collection, year) %>%
+  mutate(par = sum(c,e)) %>% dplyr::select(-c(c,e)) %>%
+  group_by(year, collection, region, 
+           sample_site, plant_type, site) %>%
+  mutate(count = n()) %>%
+  ungroup() %>%
+  dplyr::select(-c(uninf)) %>%
+  group_by(year, collection, region, sample_site, plant_type, site)
+
+# model showing difference in summer vs fall parasitism rates
+brome_par_model <-
+brome_par_model_data %>%
+  filter(plant_type == "brome") %>%
+  lm(par ~ year + region + collection, data = .) %>%
+  summary()
+
+
+```
+
+```{r per.par, eval = F}
+comb.stubble %>%
+  mutate(region = if_else(location %in% c("har", "sun", "k", "chs"), "moccasin", "big sandy")) %>%
+  group_by(region) %>%
+  reframe(total.stems = sum(total.stems),
+          inf = sum(inf),
+          cut = sum(cut),
+          par = sum(c, e),
+          inf.per = inf/total.stems,
+          cut.per = cut/inf,
+          par.per = par/inf) %>%
+  dplyr::select(par.per)
+  
+comb.stubble %>%
+  dplyr::select(-c(uninf, cut, c, e, total.stems))
+```
+
+```{r infestation_per, eval = F}
+comb.brome %>%
+  group_by(location, collection, year) %>%
+  # filter(collection == "fall") %>%
+  reframe(inf = sum(inf)/sum(total.stems)) %>%
+  distinct() %>%
+  mutate(region = if_else(location %in% c("har", "sun", "k", "chs"), "moccasin", "big sandy")) %>%
+  group_by(collection, year, region) %>%
+  reframe(inf = mean(inf)) %>%
+  na.omit() %>%
+  arrange(desc(inf))
+
+plot.data %>%
+  filter(collection == "fall") %>%
+  group_by(region, collection, plant_type) %>%
+  reframe(per.par = sum(par)/sum(total.stems))
+
+comb.brome %>%
+  mutate(region = if_else(location %in% c("har", "sun", "k", "chs"), "moccasin", "big sandy")) %>%
+  na.omit() %>%
+  group_by(region, collection) %>%
+  reframe(inf = sum(inf),
+          cut = sum(cut),
+          cut.per = cut/inf)
+```
+
+```{r paraistism_per, eval = F}
+plot.data %>%
+  filter(collection == "fall",
+         year == "2023") %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = variable, y = value, fill = plant_type),
+           position = position_dodge(width = 0.5),
+           width = 0.5) +
+  geom_errorbar(aes(x = variable, fill = plant_type,
+                    ymin = value - se,
+                    ymax = value + se),
+                position = position_dodge(width = 0.5),
+                width = 0.2) +
+  facet_wrap(sample_site~region) +
+  theme_bw() +
+  scale_fill_brewer(palette = "Greys") +
+  labs(x = NULL,
+       y = "Percentage (%)")
+
+
+mutate(type2 = if_else(
+    type %in% c("p_mean", "p_sd", "p_se"), "p", "cut"),
+    stat = str_replace(type, ".*_", "")) %>%
+  dplyr::select(-type) %>%
+  pivot_wider(values_from = value,
+              names_from = stat) %>%
+  filter(region == "Big Sandy")
+
+plot.data %>%
+  ggplot() +
+  geom_bar(stat = "identity",
+           aes(x = plant_type, y = mean, 
+               fill = type2),
+           position = position_dodge()) +
+  facet_wrap(~ year,) +
+  theme_bw()
+```
+
+```{r fig7_field_cut_plot_code, eval = F}
+field_cut_plot_data <-
+plot.data %>%
+  filter(variable == "per.cut") %>%
+  filter(collection == "fall") 
+
+mean_values <-
+field_cut_plot_data %>%
+  group_by(year, plant_type) %>%
+  reframe(value = mean(value),
+          se = mean(se)) %>%
+  group_by(plant_type) %>%
+  reframe(value = mean(value),
+          se = mean(se))
+  
+field_cut_plot <-
+field_cut_plot_data %>%
+  ggplot() +
+  geom_bar(stat = 'identity',
+           aes(x = region, 
+               y = value, fill = plant_type),
+           position = position_dodge(width = 0.5),
+           width = 0.5,
+           color = "black") +
+  geom_errorbar(aes(x = region,
+                    group = plant_type,
+                    ymin = value - se,
+                    ymax = value + se),
+                position = position_dodge(width = 0.5),
+                width = 0.2) +
+  geom_hline(data = field_cut_plot_data %>%
+               group_by(year, plant_type) %>%
+               reframe(mean_value = mean(value)),
+             aes(yintercept = mean_value,
+                 linetype = plant_type)) +
+  facet_wrap(~year) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = NULL,
+       linetype = "Average Cutting Across Sites",
+       y = "% of stems cut",
+       fill = "Plant Type") +
+  scale_fill_brewer(palette = "Greys") +
+  scale_color_brewer(palette = "Greys") 
+
+
+
+# Your data
+field_cut_plot_data <- data.frame(
+  year = c("2022", "2022", "2023", "2023"),
+  plant_type = c("brome", "wheat", "brome", "wheat"),
+  value = c(0.0588, 0.475, 0.0529, 0.468)
+)
+```
+
+
+```{r, eval = F}
+comb.stubble <-
+stubble_2023 %>%
+  rbind(stubble_2022) %>%
+  rename("c" = cocoon,
+         "e" = eh,
+         "total.stems" = total) %>%
+  group_by(site, year, collection) %>%
+  mutate(inf = sum(cut, inf.nc,c,e)) %>%
+  dplyr::select(-c(inf.nc, larvae)) 
+
+comb.stubble %>%
+  mutate(region = if_else(location %in% c("har", "sun", "k", "chs"), "moccasin", "big sandy")) %>%
+  ungroup() %>%
+  reframe(inf = sum(inf)/sum(total.stems))
+  group_by(region, collection, year) %>%
+  reframe(inf = mean(inf))
+```
+
